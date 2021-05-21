@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+// TODO: remove the dhcp feature because of it was already support in n2n
+
 type SimpleDhcpServer interface {
 	GetAnValidIp(macAddr string) (string, error)
 	ReleaseAnIp(ip string, macAddr string)

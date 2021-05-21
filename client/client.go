@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 
 	"github.com/BurntSushi/toml"
@@ -140,6 +141,5 @@ func (c *Controller) LoginAndSetupN2NEdge(username, password string) error {
 }
 
 func (c *Controller) Disconnect() error {
-	// TODO: 请求服务器，取消 IP 订阅
-	return c.cmd.Process.Kill()
+	return c.cmd.Process.Signal(os.Interrupt)
 }
