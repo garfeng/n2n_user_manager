@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"os"
 	"os/exec"
 
 	"github.com/BurntSushi/toml"
@@ -26,6 +25,8 @@ type Config struct {
 type Controller struct {
 	Config     *Config
 	ConfigPath string
+
+	cmd *exec.Cmd
 }
 
 func (c *Controller) SetConfigPath(configPath string) {
@@ -124,7 +125,7 @@ func (c *Controller) LoginAndSetupN2NEdge(username, password string) error {
 		return err
 	}
 
-	cmd := exec.Command(c.Config.EdgePath,
+	c.cmd = exec.Command(c.Config.EdgePath,
 		"-l", params.SuperNodeServer,
 		"-c", params.NetworkGroupName,
 		"-k", params.SecretKey,
@@ -132,7 +133,13 @@ func (c *Controller) LoginAndSetupN2NEdge(username, password string) error {
 		"-s", params.SubnetMask,
 		"-a", params.IP)
 
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	return cmd.Start()
+	//c.cmd.Stderr = os.Stderr
+	//c.cmd.Stdout = os.Stdout
+
+	return c.cmd.Start()
+}
+
+func (c *Controller) Disconnect() error {
+	// TODO: 请求服务器，取消 IP 订阅
+	return c.cmd.Process.Kill()
 }
