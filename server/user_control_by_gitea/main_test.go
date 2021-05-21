@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/garfeng/n2n_user_manager/server"
+	"github.com/garfeng/n2n_user_manager/common/user"
 )
 
 func Test_Login(t *testing.T) {
-	info := &server.LoginInfo{
+	info := &user.LoginInfo{
 		Username: "garfeng",
 		Password: "000000",
 		MacAddr:  "helloworld",

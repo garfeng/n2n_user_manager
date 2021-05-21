@@ -5,27 +5,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"time"
+
+	"github.com/garfeng/n2n_user_manager/common/n2n"
 )
 
 type N2NManagerServer interface {
-	TryLoginAndGetParam(username, password, macAddr string) (*N2NParams, error)
-}
-
-type N2NParams struct {
-	N2NBaseParams
-	NetworkGroupName string // 网络组名
-	SecretKey        string // 加密key
-	EncodeType       string // 加密方式
-	SubnetMask       string // 掩码
-	IP               string // 本机IP
-}
-
-type N2NBaseParams struct {
-	SuperNodeServer string // 中心结点IP端口
+	TryLoginAndGetParam(username, password, macAddr string) (*n2n.N2NParams, error)
 }
 
 type ParamGenerator interface {
-	GenerateParam(u UserInfo, macAddr string) (*N2NParams, error)
+	GenerateParam(u UserInfo, macAddr string) (*n2n.N2NParams, error)
 }
 
 func NewN2NManagerServer(authorizer Authorizer, generator ParamGenerator) N2NManagerServer {
@@ -40,7 +29,7 @@ type N2NManagerServer_ByChangeParams struct {
 	ParamGenerator ParamGenerator
 }
 
-func (b *N2NManagerServer_ByChangeParams) TryLoginAndGetParam(username, password, macAddr string) (*N2NParams, error) {
+func (b *N2NManagerServer_ByChangeParams) TryLoginAndGetParam(username, password, macAddr string) (*n2n.N2NParams, error) {
 	userInfo, err := b.Authorizer.GetUserInfo(username, password)
 	if err != nil {
 		return nil, err
@@ -65,7 +54,7 @@ type ChangeKeyEveryDayGenerator struct {
 	Dhcp SimpleDhcpServer
 }
 
-func (c *ChangeKeyEveryDayGenerator) GenerateParam(u UserInfo, macAddr string) (*N2NParams, error) {
+func (c *ChangeKeyEveryDayGenerator) GenerateParam(u UserInfo, macAddr string) (*n2n.N2NParams, error) {
 	now := time.Now().Add(time.Hour * c.TimePadding).Format("2006-01-02")
 	keyBytes := md5.Sum([]byte(c.BaseKey + now))
 	key := hex.EncodeToString(keyBytes[:])
@@ -73,8 +62,8 @@ func (c *ChangeKeyEveryDayGenerator) GenerateParam(u UserInfo, macAddr string) (
 	if err != nil {
 		return nil, err
 	}
-	return &N2NParams{
-		N2NBaseParams: N2NBaseParams{
+	return &n2n.N2NParams{
+		N2NBaseParams: n2n.N2NBaseParams{
 			SuperNodeServer: c.SuperNodeServer,
 		},
 

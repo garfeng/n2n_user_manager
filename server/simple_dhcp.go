@@ -27,8 +27,10 @@ type BaseSimpleDhcpServer struct {
 
 type BaseIpUsedInfo struct {
 	LastConnectTime time.Time
-	Expire          time.Time
-	MacAddr         string
+
+	// TODO: Delete ip from pool when expires
+	Expire  time.Time
+	MacAddr string
 }
 
 func NewBaseIpUsedInfo(macAddr string) *BaseIpUsedInfo {

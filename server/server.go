@@ -4,15 +4,9 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/garfeng/n2n_user_manager/common/user"
 )
-
-type LoginInfo struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-
-	// used for Dhcp server
-	MacAddr string `json:"mac_addr"`
-}
 
 func getHandler(manager N2NManagerServer) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +24,7 @@ func getHandler(manager N2NManagerServer) func(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		loginInfo := new(LoginInfo)
+		loginInfo := new(user.LoginInfo)
 		err = json.Unmarshal(body, loginInfo)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
