@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/garfeng/n2n_user_manager/common/user"
@@ -31,7 +32,7 @@ func getHandler(manager N2NManagerServer) func(w http.ResponseWriter, r *http.Re
 			w.Write([]byte("server error " + err.Error()))
 			return
 		}
-
+		log.Println("user login:", loginInfo.Username, loginInfo.MacAddr)
 		params, err := manager.TryLoginAndGetParam(loginInfo.Username, loginInfo.Password, loginInfo.MacAddr)
 		if err != nil {
 			w.WriteHeader(http.StatusForbidden)

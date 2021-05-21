@@ -2,8 +2,10 @@ package httputils
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -43,16 +45,25 @@ func (h *httpUtils) JSON(data interface{}) *httpUtils {
 		h.Err = err
 		return h
 	}
-
 	defer resp.Body.Close()
 	buff, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		h.Err = err
 		return h
 	}
+
+	/*
+		if resp.StatusCode != http.StatusOK {
+			h.Err = errors.New(string(buff))
+			return h
+		}
+	*/
+
+	log.Println("response:", string(buff))
+
 	err = json.Unmarshal(buff, data)
 	if err != nil {
-		h.Err = err
+		h.Err = errors.New(string(buff))
 		return h
 	}
 

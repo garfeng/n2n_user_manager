@@ -1,0 +1,3 @@
+server_host = "http://127.0.0.1:8080"
+mac_addr = "00:15:5d:8f:9a:21"
+edge_path = "./edge"

@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 
 	"github.com/BurntSushi/toml"
@@ -70,19 +72,23 @@ func (c *Controller) GetMacAddr() (string, error) {
 	}
 
 	for _, v := range addrs {
-		if v == c.Config.MacAddr {
+		if v == c.Config.MacAddr && v != "" {
 			return v, nil
 		}
 	}
 
-	c.Config.MacAddr = addrs[0]
-
-	err = c.WriteConfig()
-	if err != nil {
-		return "", err
+	for _, v := range addrs {
+		if v != "" {
+			c.Config.MacAddr = v
+			err = c.WriteConfig()
+			if err != nil {
+				return "", err
+			}
+			return c.Config.MacAddr, nil
+		}
 	}
 
-	return c.Config.MacAddr, nil
+	return "", errors.New("no mac addr available")
 }
 
 func (c *Controller) LoginAndGetN2NParam(username, password string) (*n2n.N2NParams, error) {
@@ -99,12 +105,14 @@ func (c *Controller) LoginAndGetN2NParam(username, password string) (*n2n.N2NPar
 
 	b, _ := json.MarshalIndent(loginInfo, "", "  ")
 
+	fmt.Println(string(b))
+
 	params := new(n2n.N2NParams)
 	h := httputils.NewRequest(http.MethodPost,
 		c.Config.ServerHost+"/api/n2n_params",
 		bytes.NewBuffer(b)).JSON(params)
 	if h.Err != nil {
-		return nil, err
+		return nil, h.Err
 	}
 
 	return params, nil
@@ -123,5 +131,8 @@ func (c *Controller) LoginAndSetupN2NEdge(username, password string) error {
 		params.EncodeType,
 		"-s", params.SubnetMask,
 		"-a", params.IP)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 	return cmd.Start()
 }
