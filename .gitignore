@@ -5,3 +5,4 @@ go.sum
 .idea/
 server/user_control_by_gitea/config.toml
 *.bat
+build/
