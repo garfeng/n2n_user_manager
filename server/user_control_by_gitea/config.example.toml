@@ -1,5 +1,5 @@
 gitea_host = "http://192.168.8.127"
-super_node_server = ""
+super_node_server = "127.0.0.1:8787"
 network_group_name = "gbtredg"
 encode_type = "-A1"
 time_padding = -2
