@@ -1,0 +1,9 @@
+gitea_host = "http://192.168.8.127"
+super_node_server = ""
+network_group_name = "gbtredg"
+encode_type = "-A1"
+time_padding = -2
+base_key = "fdjakldf"
+dhcp_start_ip = "192.168.1.252"
+dhcp_ip_number = 100
+server_port = ":8080"

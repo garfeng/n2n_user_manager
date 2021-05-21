@@ -1,0 +1,11 @@
+[[users]]
+id = "1"
+user = "garfeng"
+password = "000000"
+restricted = false
+
+[[users]]
+id = "2"
+user = "joe"
+password = "111111"
+restricted = false
