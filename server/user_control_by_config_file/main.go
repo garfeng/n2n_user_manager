@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/BurntSushi/toml"
 	"github.com/garfeng/n2n_user_manager/server"
@@ -48,6 +49,8 @@ func (u *UserList) Parse() {
 
 type FileAuthorizer struct {
 	users *UserList
+	// TODO: Sync safety
+	mutex sync.RWMutex
 }
 
 // reload user config from file

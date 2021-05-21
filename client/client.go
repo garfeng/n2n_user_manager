@@ -9,13 +9,10 @@ import (
 	"net/http"
 	"os/exec"
 
-	"github.com/garfeng/n2n_user_manager/common/user"
-
-	"github.com/garfeng/n2n_user_manager/common/httputils"
-
 	"github.com/BurntSushi/toml"
-
+	"github.com/garfeng/n2n_user_manager/common/httputils"
 	"github.com/garfeng/n2n_user_manager/common/n2n"
+	"github.com/garfeng/n2n_user_manager/common/user"
 )
 
 type Config struct {
