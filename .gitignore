@@ -4,5 +4,6 @@ vendor
 go.sum
 .idea/
 server/user_control_by_gitea/config.toml
+server/user_control_by_config_file/config.toml
 *.bat
 build/

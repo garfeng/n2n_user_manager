@@ -20,9 +20,7 @@ type HostConfig struct {
 	TimePadding time.Duration `toml:"time_padding"` // hour, eg. -2, key will be updated at 2:00am
 	BaseKey     string        `toml:"base_key"`
 
-	DhcpStartIp  string `toml:"dhcp_start_ip"`
-	DhcpIpNumber int    `toml:"dhcp_ip_number"`
-	ServerPort   string `toml:"server_port"`
+	ServerPort string `toml:"server_port"`
 }
 
 var (
@@ -94,7 +92,7 @@ func main() {
 			SuperNodeServer:  _hostConfig.SuperNodeServer,
 			NetworkGroupName: _hostConfig.NetworkGroupName,
 			EncodeType:       _hostConfig.EncodeType,
-			MacAddrInt:       uint64(time.Now().Unix()),
+			MacAddrInt:       uint64(time.Now().Unix() << 8),
 		})
 	server.SetupServer(_hostConfig.ServerPort, manager)
 }

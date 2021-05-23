@@ -16,6 +16,29 @@ type UserInfo struct {
 	Restricted bool   `toml:"restricted"`
 }
 
+type HostConfig struct {
+	SuperNodeServer  string `toml:"super_node_server"`
+	NetworkGroupName string `toml:"network_group_name"`
+	EncodeType       string `toml:"encode_type"`
+
+	TimePadding time.Duration `toml:"time_padding"` // hour, eg. -2, key will be updated at 2:00am
+	BaseKey     string        `toml:"base_key"`
+
+	ServerPort string `toml:"server_port"`
+}
+
+var (
+	_hostConfig *HostConfig // need init
+)
+
+func init() {
+	_hostConfig = new(HostConfig)
+	_, err := toml.DecodeFile("./config.toml", _hostConfig)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (u *UserInfo) UID() string {
 	return u.Id
 }
@@ -88,12 +111,12 @@ func main() {
 			users: new(UserList),
 		},
 		&server.ChangeKeyEveryDayGenerator{
-			BaseKey:          "123456",
-			TimePadding:      -2,
-			SuperNodeServer:  "127.0.0.1:7654",
-			NetworkGroupName: "myGroup",
-			EncodeType:       "-A2",
-			MacAddrInt:       uint64(time.Now().Unix()),
+			BaseKey:          _hostConfig.BaseKey,
+			TimePadding:      _hostConfig.TimePadding,
+			SuperNodeServer:  _hostConfig.SuperNodeServer,
+			NetworkGroupName: _hostConfig.NetworkGroupName,
+			EncodeType:       _hostConfig.EncodeType,
+			MacAddrInt:       uint64(time.Now().Unix() << 8),
 		},
 	)
 

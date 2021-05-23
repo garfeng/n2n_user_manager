@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -71,7 +72,8 @@ func (c *ChangeKeyEveryDayGenerator) intToMacAddr(num uint64) string {
 func (c *ChangeKeyEveryDayGenerator) GenerateParam(u UserInfo) (*n2n.N2NParams, error) {
 	newAddr := atomic.AddUint64(&c.MacAddrInt, 1)
 	now := time.Now().Add(time.Hour * c.TimePadding).Format("2006-01-02")
-	keyBytes := md5.Sum([]byte(c.BaseKey + now))
+	hostName, _ := os.Hostname()
+	keyBytes := md5.Sum([]byte(c.BaseKey + hostName + now))
 	key := hex.EncodeToString(keyBytes[:])
 	return &n2n.N2NParams{
 		N2NBaseParams: n2n.N2NBaseParams{
