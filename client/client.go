@@ -18,7 +18,6 @@ import (
 
 type Config struct {
 	ServerHost string `toml:"server_host"`
-	MacAddr    string `toml:"mac_addr"`
 	EdgePath   string `toml:"edge_path"`
 }
 
