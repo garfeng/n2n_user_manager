@@ -38,6 +38,14 @@ type Controller struct {
 	ErrChan chan error
 
 	cmd *exec.Cmd
+
+	currentUserInfo *CurrentUserInfo
+}
+
+type CurrentUserInfo struct {
+	Username  string
+	Password  string
+	IpAndMask []string
 }
 
 func (c *Controller) SetConfigPath(configPath string) {
@@ -95,6 +103,14 @@ func (c *Controller) LoginAndGetN2NParam(username, password string) (*n2n.N2NPar
 	return params, nil
 }
 
+func (c *Controller) InitUserInfo(username, password string, ipAndMask ...string) {
+	c.currentUserInfo = &CurrentUserInfo{
+		Username:  username,
+		Password:  password,
+		IpAndMask: ipAndMask,
+	}
+}
+
 func (c *Controller) LoginAndSetupN2NEdge(username, password string, ipAndMask ...string) error {
 	params, err := c.LoginAndGetN2NParam(username, password)
 	if err != nil {
@@ -121,17 +137,28 @@ func (c *Controller) LoginAndSetupN2NEdge(username, password string, ipAndMask .
 	c.cmd.Stderr = os.Stderr
 	c.cmd.Stdout = os.Stdout
 
-	go c.setup()
-	return nil
+	return c.cmd.Start()
 }
 
+/*
 func (c *Controller) setup() {
-	err := c.cmd.Start()
+	err := c.cmd.Run()
 	if err != nil {
 		c.ErrChan <- err
 	}
 }
+*/
 
 func (c *Controller) Cmd() *exec.Cmd {
 	return c.cmd
+}
+
+func (c *Controller) Reconnect() error {
+	fmt.Println("edge reconnect")
+	if c.cmd != nil {
+		c.Disconnect()
+		c.cmd = nil
+	}
+
+	return c.LoginAndSetupN2NEdge(c.currentUserInfo.Username, c.currentUserInfo.Password, c.currentUserInfo.IpAndMask...)
 }

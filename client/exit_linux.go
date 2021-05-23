@@ -13,5 +13,6 @@ func (c *Controller) Disconnect() error {
 		return err
 	}
 	c.cmd.Wait()
+	c.cmd = nil
 	return nil
 }
