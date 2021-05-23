@@ -50,20 +50,45 @@ func (ui *N2NUI) Run() {
 }
 
 func (ui *N2NUI) CreateWindow() {
+
+	icon, err := walk.Resources.Icon("ICON.ico")
+	if err != nil {
+		panic(err)
+	}
 	ui.mainWindow = &MainWindow{
-		Title:  "N2N Client",
-		Size:   Size{300, 400},
-		Layout: VBox{},
+		Title:   "N2N Client",
+		Icon:    icon,
+		MinSize: Size{300, 120},
+		MaxSize: Size{300, 300},
+		Size:    Size{300, 200},
+		Layout:  Grid{Columns: 2},
 		Children: []Widget{
+			Label{Text: "Username"},
 			LineEdit{
 				AssignTo: &ui.username,
 			},
+			Label{Text: "Password"},
 			LineEdit{AssignTo: &ui.password},
-			LineEdit{AssignTo: &ui.ip},
-			LineEdit{AssignTo: &ui.mask},
-			PushButton{
-				Text:      "Connect",
-				OnClicked: ui.Connect,
+			Label{Text: "IP(static)"},
+			LineEdit{
+				AssignTo:    &ui.ip,
+				ToolTipText: "Remain blank will auto get a dynamic ip",
+			},
+			Label{Text: "SubnetMask(static)"},
+			LineEdit{
+				AssignTo:    &ui.mask,
+				ToolTipText: "Remain blank will auto get the mask",
+			},
+			HSpacer{},
+			Composite{
+				Layout: HBox{MarginsZero: true},
+				Children: []Widget{
+					HSpacer{},
+					PushButton{
+						Text:      "Connect",
+						OnClicked: ui.Connect,
+					},
+				},
 			},
 		},
 	}
