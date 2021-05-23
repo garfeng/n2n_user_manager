@@ -4,17 +4,20 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/garfeng/n2n_user_manager/common/n2n"
 )
 
 type N2NManagerServer interface {
-	TryLoginAndGetParam(username, password, macAddr string) (*n2n.N2NParams, error)
+	TryLoginAndGetParam(username, password string) (*n2n.N2NParams, error)
 }
 
 type ParamGenerator interface {
-	GenerateParam(u UserInfo, macAddr string) (*n2n.N2NParams, error)
+	GenerateParam(u UserInfo) (*n2n.N2NParams, error)
 }
 
 func NewN2NManagerServer(authorizer Authorizer, generator ParamGenerator) N2NManagerServer {
@@ -29,7 +32,7 @@ type N2NManagerServer_ByChangeParams struct {
 	ParamGenerator ParamGenerator
 }
 
-func (b *N2NManagerServer_ByChangeParams) TryLoginAndGetParam(username, password, macAddr string) (*n2n.N2NParams, error) {
+func (b *N2NManagerServer_ByChangeParams) TryLoginAndGetParam(username, password string) (*n2n.N2NParams, error) {
 	userInfo, err := b.Authorizer.GetUserInfo(username, password)
 	if err != nil {
 		return nil, err
@@ -39,7 +42,7 @@ func (b *N2NManagerServer_ByChangeParams) TryLoginAndGetParam(username, password
 		return nil, errors.New("user is restricted")
 	}
 
-	return b.ParamGenerator.GenerateParam(userInfo, macAddr)
+	return b.ParamGenerator.GenerateParam(userInfo)
 }
 
 // ------------------ an example generator --------------
@@ -51,17 +54,25 @@ type ChangeKeyEveryDayGenerator struct {
 	NetworkGroupName string
 	EncodeType       string
 
-	Dhcp SimpleDhcpServer
+	MacAddrInt uint64
 }
 
-func (c *ChangeKeyEveryDayGenerator) GenerateParam(u UserInfo, macAddr string) (*n2n.N2NParams, error) {
+func (c *ChangeKeyEveryDayGenerator) intToMacAddr(num uint64) string {
+	b := fmt.Sprintf("%016x", num)
+	b2 := b[len(b)-12:]
+	sl := []string{}
+	for i := 0; i < 6; i++ {
+		sl = append(sl, b2[i*2:i*2+2])
+	}
+	mac := strings.Join(sl, ":")
+	return mac
+}
+
+func (c *ChangeKeyEveryDayGenerator) GenerateParam(u UserInfo) (*n2n.N2NParams, error) {
+	newAddr := atomic.AddUint64(&c.MacAddrInt, 1)
 	now := time.Now().Add(time.Hour * c.TimePadding).Format("2006-01-02")
 	keyBytes := md5.Sum([]byte(c.BaseKey + now))
 	key := hex.EncodeToString(keyBytes[:])
-	ip, err := c.Dhcp.GetAnValidIp(macAddr)
-	if err != nil {
-		return nil, err
-	}
 	return &n2n.N2NParams{
 		N2NBaseParams: n2n.N2NBaseParams{
 			SuperNodeServer: c.SuperNodeServer,
@@ -70,7 +81,6 @@ func (c *ChangeKeyEveryDayGenerator) GenerateParam(u UserInfo, macAddr string) (
 		NetworkGroupName: c.NetworkGroupName,
 		SecretKey:        key,
 		EncodeType:       c.EncodeType,
-		SubnetMask:       c.Dhcp.SubnetMask(),
-		IP:               ip,
+		MacAddr:          c.intToMacAddr(newAddr),
 	}, nil
 }

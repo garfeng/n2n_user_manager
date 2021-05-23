@@ -1,46 +1,74 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
+	"log"
 
 	"github.com/garfeng/n2n_user_manager/client"
 )
 
-// TODO
-
-var ()
+var (
+	username = flag.String("u", "", "<-u username>")
+	password = flag.String("p", "", "<-p password>")
+	ip       = flag.String("ip", "", "[-ip [static IP]]")
+	mask     = flag.String("mask", "", "[-mask [static mask]]")
+)
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("cmd_edge_client <username> <password>")
+	flag.Parse()
+	if *username == "" || *password == "" {
+		flag.PrintDefaults()
 		return
 	}
 
-	controller := new(client.Controller)
-	controller.SetConfigPath("config.toml")
+	ipAndMask := []string{}
+
+	if *ip != "" {
+		ipAndMask = append(ipAndMask, *ip)
+
+		if *mask != "" {
+			ipAndMask = append(ipAndMask, *mask)
+		}
+	}
+
+	controller := client.NewController("config.toml")
 	err := controller.ReadConfig()
 	if err != nil {
 		fmt.Println("fail to read config", err)
 	}
 
-	err = controller.LoginAndSetupN2NEdge(os.Args[1], os.Args[2])
+	err = controller.LoginAndSetupN2NEdge(*username, *password, ipAndMask...)
 	if err != nil {
-		fmt.Println(err)
-		<-time.After(time.Second * 10)
+		log.Println(err)
 		return
 	}
 
-	defer controller.Disconnect()
-	pause()
+	c := make(chan bool, 1)
+	go waitForExit(&c)
+	defer close(controller.ErrChan)
+
+	select {
+	case <-c:
+		log.Println("user close")
+		err = controller.Disconnect()
+		if err != nil {
+			log.Println(err)
+		}
+	case err = <-controller.ErrChan:
+		log.Println(err)
+	}
+
 }
 
-func pause() {
-	fmt.Println("press Ctrl+C to exit")
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGQUIT, syscall.SIGTERM)
-	<-c
+func waitForExit(c *chan bool) {
+	fmt.Println("input `exit()` then enter to exit")
+	s := ""
+	for {
+		fmt.Scanf("%s", &s)
+		if s == "exit()" {
+			break
+		}
+	}
+	*c <- true
 }

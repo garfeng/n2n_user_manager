@@ -1,1 +1,1 @@
-sudo ./cmd_edge_client username password
+./cmd_edge_client -u garfeng -p 000000

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/garfeng/n2n_user_manager/server"
@@ -89,10 +90,10 @@ func main() {
 		&server.ChangeKeyEveryDayGenerator{
 			BaseKey:          "123456",
 			TimePadding:      -2,
-			SuperNodeServer:  "127.0.0.1:8787",
+			SuperNodeServer:  "127.0.0.1:7654",
 			NetworkGroupName: "myGroup",
 			EncodeType:       "-A2",
-			Dhcp:             server.NewDhcpServer("192.168.1.2", 50),
+			MacAddrInt:       uint64(time.Now().Unix()),
 		},
 	)
 

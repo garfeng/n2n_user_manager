@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -23,9 +22,20 @@ type Config struct {
 	EdgePath   string `toml:"edge_path"`
 }
 
+func NewController(cfgPath string) *Controller {
+	return &Controller{
+		Config:     nil,
+		ConfigPath: cfgPath,
+		ErrChan:    make(chan error, 1),
+		cmd:        nil,
+	}
+}
+
 type Controller struct {
 	Config     *Config
 	ConfigPath string
+
+	ErrChan chan error
 
 	cmd *exec.Cmd
 }
@@ -60,49 +70,14 @@ func GetMacAddrs() ([]string, error) {
 	for _, v := range interfaces {
 		res = append(res, v.HardwareAddr.String())
 	}
+
 	return res, nil
 }
 
-func (c *Controller) GetMacAddr() (string, error) {
-	addrs, err := GetMacAddrs()
-	if err != nil {
-		return "", err
-	}
-
-	if len(addrs) == 0 {
-		return "", errors.New("no mac addr available")
-	}
-
-	for _, v := range addrs {
-		if v == c.Config.MacAddr && v != "" {
-			return v, nil
-		}
-	}
-
-	for _, v := range addrs {
-		if v != "" {
-			c.Config.MacAddr = v
-			err = c.WriteConfig()
-			if err != nil {
-				return "", err
-			}
-			return c.Config.MacAddr, nil
-		}
-	}
-
-	return "", errors.New("no mac addr available")
-}
-
 func (c *Controller) LoginAndGetN2NParam(username, password string) (*n2n.N2NParams, error) {
-	macAddr, err := c.GetMacAddr()
-	if err != nil {
-		return nil, err
-	}
-
 	loginInfo := &user.LoginInfo{
 		Username: username,
 		Password: password,
-		MacAddr:  macAddr,
 	}
 
 	b, _ := json.MarshalIndent(loginInfo, "", "  ")
@@ -120,26 +95,43 @@ func (c *Controller) LoginAndGetN2NParam(username, password string) (*n2n.N2NPar
 	return params, nil
 }
 
-func (c *Controller) LoginAndSetupN2NEdge(username, password string) error {
+func (c *Controller) LoginAndSetupN2NEdge(username, password string, ipAndMask ...string) error {
 	params, err := c.LoginAndGetN2NParam(username, password)
 	if err != nil {
 		return err
 	}
 
-	c.cmd = exec.Command(c.Config.EdgePath,
+	args := []string{
 		"-l", params.SuperNodeServer,
 		"-c", params.NetworkGroupName,
 		"-k", params.SecretKey,
+		"-m", params.MacAddr,
 		params.EncodeType,
-		"-s", params.SubnetMask,
-		"-a", params.IP)
+	}
 
-	//c.cmd.Stderr = os.Stderr
-	//c.cmd.Stdout = os.Stdout
+	if len(ipAndMask) >= 1 {
+		args = append(args, "-a", ipAndMask[0])
+	}
+	if len(ipAndMask) >= 2 {
+		args = append(args, "-s", ipAndMask[1])
+	}
 
-	return c.cmd.Start()
+	c.cmd = exec.Command(c.Config.EdgePath, args...)
+
+	c.cmd.Stderr = os.Stderr
+	c.cmd.Stdout = os.Stdout
+
+	go c.setup()
+	return nil
 }
 
-func (c *Controller) Disconnect() error {
-	return c.cmd.Process.Signal(os.Interrupt)
+func (c *Controller) setup() {
+	err := c.cmd.Start()
+	if err != nil {
+		c.ErrChan <- err
+	}
+}
+
+func (c *Controller) Cmd() *exec.Cmd {
+	return c.cmd
 }

@@ -94,7 +94,7 @@ func main() {
 			SuperNodeServer:  _hostConfig.SuperNodeServer,
 			NetworkGroupName: _hostConfig.NetworkGroupName,
 			EncodeType:       _hostConfig.EncodeType,
-			Dhcp:             server.NewDhcpServer(_hostConfig.DhcpStartIp, _hostConfig.DhcpIpNumber),
+			MacAddrInt:       uint64(time.Now().Unix()),
 		})
 	server.SetupServer(_hostConfig.ServerPort, manager)
 }
